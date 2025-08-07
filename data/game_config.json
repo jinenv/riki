@@ -1,0 +1,55 @@
+{
+  "prayer": {
+    "cooldown_minutes": 5,
+    "notification_default": false
+  },
+  "summoning": {
+    "ichor_cost": 1,
+    "rates": {
+      "1": 0.70,
+      "2": 0.20,
+      "3": 0.08,
+      "4": 0.015,
+      "5": 0.004,
+      "6": 0.001
+    }
+  },
+  "fusion": {
+    "max_tier": 6,
+    "base_cost": 1000,
+    "tier_cost_multiplier": 500,
+    "copies_required": 2
+  },
+  "power": {
+    "tier_scaling_base": 1.0,
+    "tier_scaling_multiplier": 0.15,
+    "element_bonus_multiplier": 0.05
+  },
+  "player": {
+    "base_energy": 50,
+    "energy_per_level": 10,
+    "base_stamina": 25,
+    "stamina_per_level": 5,
+    "xp_base": 1000,
+    "xp_multiplier": 1.15,
+    "starting_seios": 1000,
+    "starting_ichor": 10
+  },
+  "resources": {
+    "energy": {
+      "regen_minutes": 5,
+      "regen_amount": 1
+    },
+    "stamina": {
+      "regen_minutes": 5,
+      "regen_amount": 1
+    }
+  },
+  "currency": {
+    "exchange_rates": {
+      "seios_to_base": 1,
+      "ichor_to_base": 100,
+      "erythl_to_base": 1000
+    }
+  }
+}

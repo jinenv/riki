@@ -1,0 +1,54 @@
+{
+  "elements": {
+    "Inferno": {
+      "color": "#FF4500",
+      "emoji": "🔥",
+      "description": "Element of fire and destruction",
+      "strengths": ["Verdant"],
+      "weaknesses": ["Aqua"]
+    },
+    "Aqua": {
+      "color": "#1E90FF", 
+      "emoji": "💧",
+      "description": "Element of water and flow",
+      "strengths": ["Inferno"],
+      "weaknesses": ["Tempest"]
+    },
+    "Tempest": {
+      "color": "#FFD700",
+      "emoji": "⚡",
+      "description": "Element of lightning and speed",
+      "strengths": ["Aqua"],
+      "weaknesses": ["Verdant"]
+    },
+    "Verdant": {
+      "color": "#32CD32",
+      "emoji": "🌍", 
+      "description": "Element of earth and growth",
+      "strengths": ["Tempest"],
+      "weaknesses": ["Inferno"]
+    },
+    "Radiant": {
+      "color": "#FFE4B5",
+      "emoji": "✨",
+      "description": "Element of light and purity",
+      "strengths": ["Umbral"],
+      "weaknesses": ["Umbral"]
+    },
+    "Umbral": {
+      "color": "#2F2F2F",
+      "emoji": "🌑",
+      "description": "Element of shadow and mystery", 
+      "strengths": ["Radiant"],
+      "weaknesses": ["Radiant"]
+    }
+  },
+  "tier_names": {
+    "1": "Common",
+    "2": "Uncommon",
+    "3": "Rare", 
+    "4": "Epic",
+    "5": "Legendary",
+    "6": "Mythic"
+  }
+}

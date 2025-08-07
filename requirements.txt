@@ -1,0 +1,37 @@
+# SEIO MVP - Python Dependencies
+
+# Discord Bot Framework
+disnake==2.9.1
+
+# Database & ORM
+sqlmodel==0.0.14
+sqlalchemy[asyncio]==2.0.23
+alembic==1.13.1
+
+# Database Drivers
+aiosqlite==0.19.0
+asyncpg==0.29.0
+
+# Configuration Management
+PyYAML==6.0.1
+
+# Image Processing
+Pillow==10.1.0
+
+# Development & Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+
+# Production Utilities
+python-dotenv==1.0.0
+
+# Optional: Redis for future caching
+redis[hiredis]==5.0.1
+aioredis==2.0.1
+
+# Note: uvloop removed - Windows not supported
+# Note: asyncio-mqtt removed - not needed for MVP
