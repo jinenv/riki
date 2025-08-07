@@ -6,8 +6,8 @@ from src.services.base_service import BaseService, ServiceResult
 from src.services.currency_service import CurrencyService, CurrencyType
 from src.services.power_service import PowerService
 from src.database.models.player import Player
-from src.database.models.esprit import Esprit
-from src.database.models.esprit_base import EspritBase
+from database.models.maiden import Esprit
+from database.models.maiden_base import EspritBase
 from src.utils.database_service import DatabaseService
 from src.utils.transaction_logger import transaction_logger, TransactionType
 from src.utils.config_manager import ConfigManager

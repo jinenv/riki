@@ -4,8 +4,8 @@ from sqlalchemy import select, and_
 
 from src.services.base_service import BaseService, ServiceResult
 from src.database.models.player import Player
-from src.database.models.esprit import Esprit
-from src.database.models.esprit_base import EspritBase
+from database.models.maiden import Esprit
+from database.models.maiden_base import EspritBase
 from src.utils.database_service import DatabaseService
 from src.utils.config_manager import ConfigManager
 from src.utils.logger import get_logger

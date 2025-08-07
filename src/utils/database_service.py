@@ -140,8 +140,8 @@ class DatabaseService:
         
         # Import models to register them
         from src.database.models.player import Player
-        from src.database.models.esprit import Esprit
-        from src.database.models.esprit_base import EspritBase
+        from database.models.maiden import Esprit
+        from database.models.maiden_base import EspritBase
         
         from sqlalchemy import MetaData
         metadata = MetaData()
@@ -162,8 +162,8 @@ class DatabaseService:
         cls._ensure_initialized()
         
         from src.database.models.player import Player
-        from src.database.models.esprit import Esprit
-        from src.database.models.esprit_base import EspritBase
+        from database.models.maiden import Esprit
+        from database.models.maiden_base import EspritBase
         
         from sqlalchemy import MetaData
         metadata = MetaData()
