@@ -1,10 +1,10 @@
-# src/utils/logger.py
 import logging
 import sys
 from pathlib import Path
 from typing import Optional
 from logging.handlers import RotatingFileHandler
 import json
+from datetime import datetime
 
 class JSONFormatter(logging.Formatter):
     """JSON formatter for structured logging"""
@@ -30,6 +30,9 @@ class JSONFormatter(logging.Formatter):
         if hasattr(record, 'transaction'):
             log_entry["transaction"] = record.transaction
         
+        if hasattr(record, 'context'):
+            log_entry["context"] = record.context
+        
         # Add exception info if present
         if record.exc_info:
             log_entry["exception"] = self.formatException(record.exc_info)
@@ -37,7 +40,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_entry)
 
 def setup_logging(log_level: str = "INFO", log_to_file: bool = True) -> None:
-    """Setup application logging configuration"""
+    """Setup application logging configuration for RIKI"""
     
     # Create logs directory
     log_dir = Path("logs")
@@ -54,7 +57,8 @@ def setup_logging(log_level: str = "INFO", log_to_file: bool = True) -> None:
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
     console_format = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
     console_handler.setFormatter(console_format)
     root_logger.addHandler(console_handler)
@@ -62,7 +66,7 @@ def setup_logging(log_level: str = "INFO", log_to_file: bool = True) -> None:
     if log_to_file:
         # Main application log with JSON format
         app_handler = RotatingFileHandler(
-            log_dir / "seio_app.log",
+            log_dir / "riki.log",
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5
         )
@@ -72,7 +76,7 @@ def setup_logging(log_level: str = "INFO", log_to_file: bool = True) -> None:
         
         # Transaction log (separate file for audit trail)
         transaction_handler = RotatingFileHandler(
-            log_dir / "seio_transactions.log",
+            log_dir / "riki_transactions.log",
             maxBytes=50*1024*1024,  # 50MB
             backupCount=10
         )
@@ -87,20 +91,38 @@ def setup_logging(log_level: str = "INFO", log_to_file: bool = True) -> None:
         
         # Error log (separate file for errors only)
         error_handler = RotatingFileHandler(
-            log_dir / "seio_errors.log",
+            log_dir / "riki_errors.log",
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5
         )
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(JSONFormatter())
         root_logger.addHandler(error_handler)
+        
+        # Currency log (track all currency changes)
+        currency_handler = RotatingFileHandler(
+            log_dir / "riki_currency.log",
+            maxBytes=20*1024*1024,  # 20MB
+            backupCount=10
+        )
+        currency_handler.setLevel(logging.INFO)
+        currency_handler.setFormatter(JSONFormatter())
+        
+        # Filter for currency transactions
+        currency_handler.addFilter(
+            lambda record: hasattr(record, 'transaction_type') and 
+            any(currency in str(getattr(record, 'transaction_type', '')) 
+                for currency in ['RIKIES', 'GRACE', 'SHARDS'])
+        )
+        root_logger.addHandler(currency_handler)
     
     # Suppress noisy third-party loggers
     logging.getLogger("discord").setLevel(logging.WARNING)
     logging.getLogger("discord.http").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
+    logging.getLogger("aiosqlite").setLevel(logging.WARNING)
     
-    logging.info("Logging system initialized")
+    logging.info(f"RIKI logging system initialized at {datetime.now()}")
 
 def get_logger(name: str) -> logging.Logger:
     """Get logger instance for module"""

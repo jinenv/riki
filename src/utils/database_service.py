@@ -1,4 +1,3 @@
-# src/utils/database_service.py
 import asyncio
 from typing import AsyncGenerator, Optional, Dict, Any
 from contextlib import asynccontextmanager
@@ -8,6 +7,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncEngine
 )
+from sqlalchemy import text
 from sqlalchemy.pool import StaticPool
 import os
 
@@ -37,34 +37,30 @@ class DatabaseService:
         if not database_url:
             database_url = os.getenv(
                 "DATABASE_URL", 
-                "sqlite+aiosqlite:///seio_game.db"
+                "sqlite+aiosqlite:///riki.db"
             )
         
         logger.info(f"Initializing database: {database_url.split('://')[0]}://...")
         
-        # Engine configuration
-        engine_kwargs = {
+        # Engine configuration - type-safe approach
+        engine_kwargs: Dict[str, Any] = {
             "echo": echo,
             "future": True,
         }
         
         # SQLite specific configuration
         if "sqlite" in database_url:
-            engine_kwargs.update({
-                "poolclass": StaticPool,
-                "connect_args": {
-                    "check_same_thread": False,
-                    "timeout": 30
-                }
-            })
+            engine_kwargs["poolclass"] = StaticPool
+            engine_kwargs["connect_args"] = {
+                "check_same_thread": False,
+                "timeout": 30
+            }
         else:
             # PostgreSQL configuration
-            engine_kwargs.update({
-                "pool_size": 5,
-                "max_overflow": 10,
-                "pool_timeout": 30,
-                "pool_recycle": 3600
-            })
+            engine_kwargs["pool_size"] = 5
+            engine_kwargs["max_overflow"] = 10
+            engine_kwargs["pool_timeout"] = 30
+            engine_kwargs["pool_recycle"] = 3600
         
         cls._engine = create_async_engine(database_url, **engine_kwargs)
         cls._session_factory = async_sessionmaker(
@@ -90,14 +86,17 @@ class DatabaseService:
     @classmethod
     def _ensure_initialized(cls) -> None:
         """Ensure database service is initialized"""
-        if not cls._is_initialized:
+        if not cls._is_initialized or not cls._session_factory or not cls._engine:
             raise RuntimeError("Database service not initialized. Call DatabaseService.initialize() first.")
     
     @classmethod
     @asynccontextmanager
-    async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async def get_session(cls) -> AsyncGenerator[AsyncSession, None]:
         """Get database session for read operations"""
         cls._ensure_initialized()
+        
+        # Type assertion - we know it's not None after _ensure_initialized
+        assert cls._session_factory is not None
         
         async with cls._session_factory() as session:
             try:
@@ -111,9 +110,12 @@ class DatabaseService:
     
     @classmethod
     @asynccontextmanager
-    async def get_transaction() -> AsyncGenerator[AsyncSession, None]:
+    async def get_transaction(cls) -> AsyncGenerator[AsyncSession, None]:
         """Get database session with automatic transaction management"""
         cls._ensure_initialized()
+        
+        # Type assertion - we know it's not None after _ensure_initialized
+        assert cls._session_factory is not None
         
         async with cls._session_factory() as session:
             try:
@@ -138,16 +140,19 @@ class DatabaseService:
         """Create all database tables"""
         cls._ensure_initialized()
         
+        # Type assertion
+        assert cls._engine is not None
+        
         # Import models to register them
         from src.database.models.player import Player
-        from database.models.maiden import Esprit
-        from database.models.maiden_base import EspritBase
+        from src.database.models.maiden import Maiden
+        from src.database.models.maiden_base import MaidenBase
         
         from sqlalchemy import MetaData
         metadata = MetaData()
         
         # Import all model metadata
-        for model in [Player, Esprit, EspritBase]:
+        for model in [Player, Maiden, MaidenBase]:
             for table in model.metadata.tables.values():
                 table.tometadata(metadata)
         
@@ -161,14 +166,17 @@ class DatabaseService:
         """Drop all database tables (use with caution)"""
         cls._ensure_initialized()
         
+        # Type assertion
+        assert cls._engine is not None
+        
         from src.database.models.player import Player
-        from database.models.maiden import Esprit
-        from database.models.maiden_base import EspritBase
+        from src.database.models.maiden import Maiden
+        from src.database.models.maiden_base import MaidenBase
         
         from sqlalchemy import MetaData
         metadata = MetaData()
         
-        for model in [Player, Esprit, EspritBase]:
+        for model in [Player, Maiden, MaidenBase]:
             for table in model.metadata.tables.values():
                 table.tometadata(metadata)
         
@@ -182,10 +190,15 @@ class DatabaseService:
         """Check database connection health"""
         cls._ensure_initialized()
         
+        # Type assertion
+        assert cls._engine is not None
+        
         try:
             async with cls.get_session() as session:
-                result = await session.execute("SELECT 1")
-                await result.fetchone()
+                # Use text() wrapper for raw SQL
+                result = await session.execute(text("SELECT 1"))
+                # Just fetch the result - fetchone() is not async
+                result.fetchone()
             
             return {
                 "status": "healthy",
@@ -206,9 +219,18 @@ class DatabaseService:
         """Get database connection information"""
         cls._ensure_initialized()
         
+        # Type assertions
+        assert cls._engine is not None
+        
         pool = cls._engine.pool
+        
+        # Safe password replacement
+        url_str = str(cls._engine.url)
+        if cls._engine.url.password:
+            url_str = url_str.replace(cls._engine.url.password, "***")
+        
         return {
-            "engine_url": str(cls._engine.url).replace(cls._engine.url.password or "", "***"),
+            "engine_url": url_str,
             "pool_size": getattr(pool, 'size', lambda: 'N/A')(),
             "checked_out": getattr(pool, 'checkedout', lambda: 'N/A')(),
             "overflow": getattr(pool, 'overflow', lambda: 'N/A')(),

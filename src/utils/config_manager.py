@@ -1,4 +1,3 @@
-# src/utils/config_manager.py
 import json
 import yaml
 from typing import Any, Dict, Optional
@@ -20,7 +19,6 @@ class ConfigManager:
         """Get configuration value with dot notation support"""
         cls._ensure_configs_loaded()
         
-        # Split key by dots for nested access
         keys = key.split('.')
         value = cls._config_cache
         
@@ -29,6 +27,7 @@ class ConfigManager:
                 value = value[k]
             return value
         except (KeyError, TypeError):
+            logger.debug(f"Config key '{key}' not found, using default: {default}")
             return default
     
     @classmethod
@@ -49,13 +48,12 @@ class ConfigManager:
     def _load_all_configs(cls) -> None:
         """Load all configuration files from config directory"""
         if not cls._config_dir.exists():
-            logger.warning(f"Config directory {cls._config_dir} not found")
+            logger.warning(f"Config directory {cls._config_dir} not found, using defaults")
             cls._config_cache = cls._get_default_config()
             return
         
         merged_config = {}
         
-        # Load all JSON and YAML files
         for config_file in cls._config_dir.glob("*.json"):
             try:
                 with open(config_file, 'r', encoding='utf-8') as f:
@@ -76,7 +74,6 @@ class ConfigManager:
             except Exception as e:
                 logger.error(f"Failed to load {config_file}: {e}")
         
-        # Merge with defaults
         default_config = cls._get_default_config()
         cls._config_cache = cls._deep_merge(default_config, merged_config)
         
@@ -97,96 +94,134 @@ class ConfigManager:
     
     @classmethod
     def _get_default_config(cls) -> Dict[str, Any]:
-        """Default configuration values for MVP"""
+        """Default configuration values for RIKI MVP"""
         return {
+            # Grace System
             "prayer": {
-                "cooldown_minutes": 5
+                "cooldown_minutes": 6,
+                "base_grace_reward": 1
             },
+            
+            # Summoning
             "summoning": {
-                "ichor_cost": 1,
+                "grace_cost": 1,
                 "rates": {
-                    "1": 0.70,  # 70% Common
-                    "2": 0.20,  # 20% Uncommon  
-                    "3": 0.08,  # 8% Rare
-                    "4": 0.015, # 1.5% Epic
-                    "5": 0.004, # 0.4% Legendary
-                    "6": 0.001  # 0.1% Mythic
+                    "1": 0.70,   # 70%
+                    "2": 0.20,   # 20%
+                    "3": 0.08,   # 8%
+                    "4": 0.015,  # 1.5%
+                    "5": 0.004,  # 0.4%
+                    "6": 0.001   # 0.1%
                 }
             },
+            
+            # Fusion
             "fusion": {
-                "max_tier": 6,
+                "max_tier": 12,
                 "base_cost": 1000,
-                "tier_cost_multiplier": 500
-            },
-            "power": {
-                "tier_scaling_base": 1.0,
-                "tier_scaling_multiplier": 0.15,
-                "element_bonus_multiplier": 0.05
-            },
-            "tower": {
-                "base_boss_health": 100,
-                "difficulty_multiplier": 1000,
-                "damage_variance": 0.2,
-                "base_seios_per_hour": 100,
-                "base_progress_per_hour": 0.1,
-                "max_idle_hours": 24,
-                "erythl_chance_per_hour": 0.05,
-                "encounter_chance_per_hour": 0.1,
-                "themes": [
-                    {"max_floor": 100, "name": "Lower Floors"},
-                    {"max_floor": 500, "name": "Mid Floors"},
-                    {"max_floor": 999999, "name": "Upper Floors"}
-                ]
-            },
-            "player": {
-                "base_energy": 50,
-                "energy_per_level": 10,
-                "base_stamina": 25,
-                "stamina_per_level": 5,
-                "xp_base": 1000,
-                "xp_multiplier": 1.15
-            },
-            "energy": {
-                "regen_minutes": 5,
-                "regen_amount": 1
-            },
-            "stamina": {
-                "regen_minutes": 5,
-                "regen_amount": 1
-            },
-            "element_system": {
-                "valid_elements": [
-                    "Inferno", "Aqua", "Tempest", "Earth", "Umbral", "Radiant"
-                ],
-                "emojis": {
-                    "Inferno": "🔥",
-                    "Aqua": "💧",
-                    "Tempest": "⚡", 
-                    "Earth": "🌿",
-                    "Umbral": "🌑",
-                    "Radiant": "✨"
-                }
-            },
-            "tier_system": {
-                "names": {
-                    "1": "Common",
-                    "2": "Uncommon", 
-                    "3": "Rare",
-                    "4": "Epic",
-                    "5": "Legendary",
-                    "6": "Mythic"
-                }
-            },
-            "currency": {
-                "exchange_rates": {
-                    "seios_to_base": 1,
-                    "ichor_to_base": 100,
-                    "erythl_to_base": 1000
+                "cost_multiplier": 2.5,
+                "costs": {  # Pre-calculated for clarity
+                    "1": 1000,       # Tier 1→2
+                    "2": 2500,       # Tier 2→3
+                    "3": 6250,       # Tier 3→4
+                    "4": 15625,      # Tier 4→5
+                    "5": 39062,      # Tier 5→6
+                    "6": 97656,      # Tier 6→7
+                    "7": 244140,     # Tier 7→8
+                    "8": 610351,     # Tier 8→9
+                    "9": 1525878,    # Tier 9→10
+                    "10": 3814697,   # Tier 10→11
+                    "11": 9536743    # Tier 11→12
                 },
-                "transfers": {
-                    "seios": {"enabled": False},
-                    "ichor": {"enabled": False},
-                    "erythl": {"enabled": False}
+                "success_rates": {
+                    "1": 0.80,
+                    "2": 0.75,
+                    "3": 0.70,
+                    "4": 0.65,
+                    "5": 0.60,
+                    "6": 0.55,
+                    "7": 0.50,
+                    "8": 0.45,
+                    "9": 0.40,
+                    "10": 0.35,
+                    "11": 0.30
                 }
+            },
+            
+            # Player
+            "player": {
+                "starting": {
+                    "energy": 50,
+                    "stamina": 25,
+                    "level": 0
+                },
+                "per_level": {
+                    "skill_points": 3,
+                    "energy_base": 10,
+                    "stamina_base": 5
+                },
+                "per_point": {
+                    "energy": 5,
+                    "stamina": 5,
+                    "attack": 10,
+                    "defense": 10
+                }
+            },
+            
+            # Resources
+            "resources": {
+                "energy": {
+                    "regen_minutes": 3,
+                    "regen_amount": 2
+                },
+                "stamina": {
+                    "regen_minutes": 2,
+                    "regen_amount": 1
+                }
+            },
+            
+            # Classes
+            "classes": {
+                "destroyer": {"stamina_regen_mult": 1.25},
+                "adapter": {"energy_regen_mult": 1.25},
+                "invoker": {"rikies_mult": 1.2}
+            },
+            
+            # Combat
+            "combat": {
+                "power_per_tier": 0.5  # 50% increase per tier
+            },
+            
+            # Elements
+            "elements": [
+                "infernal", "umbral", "earth", 
+                "tempest", "radiant", "abyssal"
+            ],
+            
+            # Tutorial
+            "tutorial": {
+                "rewards": {
+                    "grace": 3,
+                    "rikies": 500
+                },
+                "guaranteed_tier": 2,
+                "total_steps": 9
+            },
+            
+            # Zones
+            "zones": {
+                "count": 3,
+                "subzones": 10
+            },
+            
+            # Artifacts
+            "artifacts": {
+                "fragments_per": 10
+            },
+            
+            # Rate Limits
+            "rate_limits": {
+                "uses": 5,
+                "seconds": 60
             }
         }
